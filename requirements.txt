@@ -17,3 +17,6 @@ praw==7.7.1
 
 googlesearch-python==1.2.3
 beautifulsoup4==4.12.3
+
+youtube-comment-downloader==0.1.66
+youtube-search-python==1.6.6
