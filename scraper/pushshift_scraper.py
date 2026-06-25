@@ -4,31 +4,42 @@ import os
 import time
 
 def run_scraper():
-    base_url = "https://arctic-shift.photon-reddit.com/api"
     subreddits = ["pakistan", "karachi", "lahore"]
     keywords = [
         "scam", "fraud", "dhoka", "fake", "beware", "warning",
         "lucky draw", "prize", "OTP", "account band"
     ]
     
+    headers = {
+        "User-Agent": "roman-urdu-scraper/1.0"
+    }
+    
     results = []
     
-    print("Connecting to Arctic Shift API...")
+    print("Connecting to old.reddit.com API...")
     
     for sub in subreddits:
         for kw in keywords:
             print(f"Searching r/{sub} for '{kw}'...")
             try:
-                # The endpoint may use 'subreddit' and 'q' parameters
-                response = requests.get(f"{base_url}/posts/search", params={"q": kw, "subreddit": sub, "limit": 100})
+                url = f"https://old.reddit.com/r/{sub}/search.json"
+                params = {
+                    "q": kw,
+                    "restrict_sr": 1,
+                    "sort": "new",
+                    "limit": 100
+                }
+                response = requests.get(url, headers=headers, params=params, timeout=10)
+                
                 if response.status_code == 200:
                     data = response.json()
-                    posts = data.get("data", [])
-                    for post in posts:
+                    children = data.get("data", {}).get("children", [])
+                    for child in children:
+                        post = child.get("data", {})
                         title = post.get("title", "")
                         body = post.get("selftext", "")
                         text = f"{title} {body}".strip().replace("\n", " ")
-                        # Basic filtering for empty text
+                        
                         if text:
                             results.append({
                                 "text": text,
@@ -38,8 +49,9 @@ def run_scraper():
                             })
                 else:
                     print(f"Failed with status code: {response.status_code}")
-                # Polite delay to avoid rate limiting
-                time.sleep(1)
+                    
+                # Rate limit 1 req / 2 seconds
+                time.sleep(2)
             except Exception as e:
                 print(f"Error fetching data: {e}")
                 
